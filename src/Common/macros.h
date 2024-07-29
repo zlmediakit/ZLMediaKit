@@ -79,15 +79,30 @@ extern void Assert_Throw(int failed, const char *exp, const char *func, const ch
 }
 #endif
 
+
+#if defined(GENERATE_EXPORT)
+#include "mk_cxx_export.h"
+#endif
+
+#if defined(_WIN32) && defined(_MSC_VER)
+#    define API_CALL __cdecl
+#else
+#    define API_CALL
+#endif
+
+#if defined(_WIN32) && defined(_MSC_VER)
+#    if !defined(GENERATE_EXPORT)
+#        if defined(zlmediakit_EXPORTS)
+#            define MK_EXPORT __declspec(dllexport)
+#        else
+#            define MK_EXPORT __declspec(dllimport)
+#        endif
+#    endif
+#elif !defined(GENERATE_EXPORT)
+#   define MK_EXPORT __attribute__((visibility("default")))
+#endif
+
 namespace mediakit {
-
-class AssertFailedException : public std::runtime_error {
-public:
-    template<typename ...T>
-    AssertFailedException(T && ...args) : std::runtime_error(std::forward<T>(args)...) {}
-};
-
-extern const char kServerName[];
 
 template <typename... ARGS>
 void Assert_ThrowCpp(int failed, const char *exp, const char *func, const char *file, int line, ARGS &&...args) {
@@ -97,6 +112,7 @@ void Assert_ThrowCpp(int failed, const char *exp, const char *func, const char *
         Assert_Throw(failed, exp, func, file, line, ss.str().data());
     }
 }
+MK_EXPORT extern const char kServerName[];
 
 } // namespace mediakit
 #endif // ZLMEDIAKIT_MACROS_H
